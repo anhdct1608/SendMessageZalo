@@ -1,6 +1,6 @@
 using System;
 
-namespace SendMessage
+namespace SendMessageZalo
 {
     public class WeatherForecast
     {
