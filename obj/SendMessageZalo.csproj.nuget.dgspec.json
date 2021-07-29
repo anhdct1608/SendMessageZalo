@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Acer\\Desktop\\New folder\\SendMessageZalo\\SendMessageZalo\\SendMessageZalo.csproj": {}
+    "C:\\Users\\Acer\\Desktop\\SendMessageZalo\\SendMessageZalo.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Acer\\Desktop\\New folder\\SendMessageZalo\\SendMessageZalo\\SendMessageZalo.csproj": {
+    "C:\\Users\\Acer\\Desktop\\SendMessageZalo\\SendMessageZalo.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Acer\\Desktop\\New folder\\SendMessageZalo\\SendMessageZalo\\SendMessageZalo.csproj",
+        "projectUniqueName": "C:\\Users\\Acer\\Desktop\\SendMessageZalo\\SendMessageZalo.csproj",
         "projectName": "SendMessageZalo",
-        "projectPath": "C:\\Users\\Acer\\Desktop\\New folder\\SendMessageZalo\\SendMessageZalo\\SendMessageZalo.csproj",
+        "projectPath": "C:\\Users\\Acer\\Desktop\\SendMessageZalo\\SendMessageZalo.csproj",
         "packagesPath": "C:\\Users\\Acer\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Acer\\Desktop\\New folder\\SendMessageZalo\\SendMessageZalo\\obj\\",
+        "outputPath": "C:\\Users\\Acer\\Desktop\\SendMessageZalo\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Acer\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -40,9 +40,21 @@
         "net5.0": {
           "targetAlias": "net5.0",
           "dependencies": {
+            "Microsoft.AspNetCore.Mvc.NewtonsoftJson": {
+              "target": "Package",
+              "version": "[5.0.8, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.1, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[5.6.3, )"
+            },
+            "vng.zalo.ZaloDotNetSDK": {
+              "target": "Package",
+              "version": "[1.1.6, )"
             }
           },
           "imports": [
