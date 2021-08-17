@@ -91,20 +91,27 @@ namespace SendMessageZalo.Controllers
         [HttpPost("ZaloManager")]
         public JObject ZaloManager(JObject model){
             JObject res = new JObject();
-            string event_name = model["event_name"].ToString();
-            switch (event_name)
+            if (model["event_name"] != null)
             {
-                case "user_send_text":
-                    res = ReceiveMessage(model);
-                    break;
-                case "follow":
-                    res = Follow(model);
-                    break;
-                case "unfollow":
-                    res = UnFollow(model);
-                    break;
-                default:
-                    break;
+                string event_name = model["event_name"].ToString();
+                switch (event_name)
+                {
+                    case "user_send_text":
+                        res = ReceiveMessage(model);
+                        break;
+                    case "follow":
+                        res = Follow(model);
+                        break;
+                    case "unfollow":
+                        res = UnFollow(model);
+                        break;
+                    default:
+                        res.Add("ok",true);
+                        break;
+                }
+            } 
+            else {
+                res.Add("event_name",null);
             }
             return res;
         }
