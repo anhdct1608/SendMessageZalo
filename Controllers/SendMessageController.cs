@@ -125,25 +125,48 @@ namespace SendMessageZalo.Controllers
                 command.CommandText = queryString;
                 command.Parameters.AddWithValue("@PhoneNumber", Phone);
                 using var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    JObject data = new JObject();
-                    JObject user_id = new JObject();
-                    JObject message = new JObject();
-                    user_id.Add("user_id",String.Format("{0}", reader[0]));
-                    message.Add("text",model["msg"].ToString());
-                    data.Add("recipient",user_id);
-                    data.Add("message",message);
-                    string SendMessageUrls = "https://openapi.zalo.me/v2.0/oa/message";
-                    Object SendMessage = _webClient.UploadString(SendMessageUrls,data.ToString());
-                    result.Add(SendMessage);
+                if (reader.HasRows) {
+                    while (reader.Read())
+                    {
+                        JObject data = new JObject();
+                        JObject user_id = new JObject();
+                        JObject message = new JObject();
+                        user_id.Add("user_id",String.Format("{0}", reader[0]));
+                        message.Add("text",model["msg"].ToString());
+                        data.Add("recipient",user_id);
+                        data.Add("message",message);
+                        string SendMessageUrls = "https://openapi.zalo.me/v2.0/oa/message";
+                        string SendMessage = _webClient.UploadString(SendMessageUrls,data.ToString());
+                        JObject json = JObject.Parse(SendMessage);
+                        if (json["error"].ToString() != "0")
+                        {
+                            JObject err = new JObject();
+                            err.Add("ok", false);
+                            err.Add("PhoneNumber",PhoneNumber);
+                            err.Add("error",json);
+                            result.Add(err);
+                        } else
+                        {
+                            JObject success = new JObject();
+                            success.Add("ok", true);
+                            success.Add("PhoneNumber",PhoneNumber);
+                            success.Add("data",json);
+                            result.Add(success);
+                        }
+                    }
+                }
+                else {
+                    JObject err = new JObject();
+                    err.Add("ok", false);
+                    err.Add("PhoneNumber",PhoneNumber);
+                    err.Add("error","số điện thoại không tồn tại trên hệ thống");
+                    result.Add(err);
                 }
                 connection.Close();
             }
             //-----
             JObject res = new JObject();
-            res.Add("ok", true);
-            res.Add("data", result.ToString());
+            res.Add("data", result);
             return res;
         }
 
