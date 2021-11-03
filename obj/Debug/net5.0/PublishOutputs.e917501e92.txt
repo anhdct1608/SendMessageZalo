@@ -7,10 +7,12 @@ C:\Users\Acer\Desktop\SendMessageZalo\bin\Debug\net5.0\publish\SendMessageZalo.r
 C:\Users\Acer\Desktop\SendMessageZalo\bin\Debug\net5.0\publish\SendMessageZalo.pdb
 C:\Users\Acer\Desktop\SendMessageZalo\bin\Debug\net5.0\publish\Microsoft.AspNetCore.JsonPatch.dll
 C:\Users\Acer\Desktop\SendMessageZalo\bin\Debug\net5.0\publish\Microsoft.AspNetCore.Mvc.NewtonsoftJson.dll
+C:\Users\Acer\Desktop\SendMessageZalo\bin\Debug\net5.0\publish\Microsoft.DotNet.PlatformAbstractions.dll
 C:\Users\Acer\Desktop\SendMessageZalo\bin\Debug\net5.0\publish\Microsoft.EntityFrameworkCore.dll
 C:\Users\Acer\Desktop\SendMessageZalo\bin\Debug\net5.0\publish\Microsoft.EntityFrameworkCore.Abstractions.dll
 C:\Users\Acer\Desktop\SendMessageZalo\bin\Debug\net5.0\publish\Microsoft.EntityFrameworkCore.Relational.dll
 C:\Users\Acer\Desktop\SendMessageZalo\bin\Debug\net5.0\publish\Microsoft.Extensions.DependencyInjection.dll
+C:\Users\Acer\Desktop\SendMessageZalo\bin\Debug\net5.0\publish\Microsoft.Extensions.DependencyModel.dll
 C:\Users\Acer\Desktop\SendMessageZalo\bin\Debug\net5.0\publish\Microsoft.OpenApi.dll
 C:\Users\Acer\Desktop\SendMessageZalo\bin\Debug\net5.0\publish\Newtonsoft.Json.dll
 C:\Users\Acer\Desktop\SendMessageZalo\bin\Debug\net5.0\publish\Newtonsoft.Json.Bson.dll

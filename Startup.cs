@@ -32,6 +32,7 @@ namespace SendMessageZalo
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "SendMessageZalo", Version = "v1" });
             });
+            services.AddMvc();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

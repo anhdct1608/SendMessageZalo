@@ -16,7 +16,7 @@ namespace SendMessageZalo.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class SendMessageController : ControllerBase
+    public class SendMessageController : Controller
     {
         private WebClient _webClient = null;
         public IConfiguration Configuration { get; }
@@ -33,10 +33,44 @@ namespace SendMessageZalo.Controllers
             _webClient.Headers.Add(HttpRequestHeader.Accept, "application/json");
             _webClient.Headers.Add("access_token:" + Configuration.GetSection("SendMessageZalo:access_token").Value);
             string ListFollowerUrl = @"https://openapi.zalo.me/v2.0/oa/getfollowers?data={'offset':0,'count':'50'}";
-            string result = _webClient.DownloadString(ListFollowerUrl);
+            JObject result = JObject.Parse(_webClient.DownloadString(ListFollowerUrl));
             JObject res = new JObject();
             res.Add("ok", true);
-            res.Add("data", result.ToString());
+            res.Add("data", result);
+            return res;
+        }
+
+        [HttpGet("GetListPost")]
+        public JObject GetListPost()
+        {
+            _webClient = new WebClient();
+            _webClient.Encoding = System.Text.Encoding.UTF8;
+            _webClient.Headers.Add(HttpRequestHeader.ContentType, "application/json");
+            _webClient.Headers.Add(HttpRequestHeader.Accept, "application/json");
+            _webClient.Headers.Add("access_token:" + Configuration.GetSection("SendMessageZalo:access_token").Value);
+            string GetListPostUrl = "https://openapi.zalo.me/v2.0/article/getslice?access_token=" + Configuration.GetSection("SendMessageZalo:access_token").Value + "&offset=0&limit=10&type=normal";
+            JObject GetListPostResult = JObject.Parse(_webClient.DownloadString(GetListPostUrl));
+            JObject res = new JObject();
+            res.Add("ok", true);
+            res.Add("data", GetListPostResult);
+            return res;
+        }
+
+        [HttpPost("GetPostByToken")]
+        public JObject GetPostByToken(JObject model)
+        {
+            _webClient = new WebClient();
+            _webClient.Encoding = System.Text.Encoding.UTF8;
+            _webClient.Headers.Add(HttpRequestHeader.ContentType, "application/json");
+            _webClient.Headers.Add(HttpRequestHeader.Accept, "application/json");
+            _webClient.Headers.Add("access_token:" + Configuration.GetSection("SendMessageZalo:access_token").Value);
+            JObject data = new JObject();
+            data.Add("token",model["token"].ToString());
+            string GetListPostUrl = "https://openapi.zalo.me/v2.0/article/getslice?access_token=" + Configuration.GetSection("SendMessageZalo:access_token").Value + "&offset=0&limit=10&type=normal";
+            JObject GetListPostResult = JObject.Parse(_webClient.DownloadString(GetListPostUrl));
+            JObject res = new JObject();
+            res.Add("ok", true);
+            res.Add("data", GetListPostResult);
             return res;
         }
 
@@ -52,15 +86,164 @@ namespace SendMessageZalo.Controllers
             string result = _webClient.DownloadString(ListFollowerUrl);
             JObject res = new JObject();
             res.Add("ok", true);
-            res.Add("data", result.ToString());
+            res.Add("data", JObject.Parse(result));
             return res;
         }
 
-        [HttpPost("test")]
-        public JObject test(JObject model)
+        [HttpPost("CreatePost")]
+        public JObject CreatePost(JObject model)
         {
+            _webClient = new WebClient();
+            _webClient.Encoding = System.Text.Encoding.UTF8;
+            _webClient.Headers.Add(HttpRequestHeader.ContentType, "application/json");
+            _webClient.Headers.Add(HttpRequestHeader.Accept, "application/json");
+            _webClient.Headers.Add("access_token:" + Configuration.GetSection("SendMessageZalo:access_token").Value);
             JObject res = new JObject();
-            res = RequestUserInfo(model["UserId"].ToString());
+            JObject cover = new JObject();
+            JArray body = new JArray();
+            JObject data = new JObject();
+            cover.Add("cover_type","photo");
+            cover.Add("status","show");
+            cover.Add("photo_url",model["photo_url"]);
+            data.Add("type","normal");
+            data.Add("title",model["title"].ToString());
+            data.Add("author",model["author"].ToString());
+            data.Add("cover",cover);
+            data.Add("description",model["description"].ToString());
+            data.Add("body",model["body"]);
+            data.Add("status","show");
+            data.Add("comment","show");
+            string CreatePostUrl = "https://openapi.zalo.me/v2.0/article/create?access_token="+Configuration.GetSection("SendMessageZalo:access_token").Value;
+            string CreatePost = _webClient.UploadString(CreatePostUrl,data.ToString());
+            JObject CreatePostResult = JObject.Parse(CreatePost);
+            if (CreatePostResult["error"].ToString() != "0")
+            {
+                res.Add("ok",false);
+            } else
+            {
+                res.Add("ok",true);
+            }
+            res.Add("data",CreatePostResult);
+            return res;
+        }
+
+        [HttpPost("SendBoadcast")]
+        public JObject SendBoadcast(JObject model)
+        {
+            _webClient = new WebClient();
+            _webClient.Encoding = System.Text.Encoding.UTF8;
+            _webClient.Headers.Add(HttpRequestHeader.ContentType, "application/json");
+            _webClient.Headers.Add(HttpRequestHeader.Accept, "application/json");
+            _webClient.Headers.Add("access_token:" + Configuration.GetSection("SendMessageZalo:access_token").Value);
+            JObject res = new JObject();
+            string stringdata = @"{'recipient': {
+                                            'target': {
+                                                    'gender': '0'
+                                                }
+                                            },
+                                            'message': {
+                                                'attachment': {
+                                                    'type': 'template',
+                                                    'payload': {
+                                                        'template_type': 'media',
+                                                        'elements': [
+                                                                {
+                                                                    'media_type': 'article',
+                                                                    'attachment_id': '"+model["attachment_id"].ToString() +  
+                                                                @"'}
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            }";
+            JObject data = JObject.Parse(stringdata);
+            string SendBoadcasttUrl = "https://openapi.zalo.me/v2.0/oa/message";
+            JObject result = JObject.Parse(_webClient.UploadString(SendBoadcasttUrl,data.ToString()));
+            if (result["error"].ToString() != "0")
+            {
+                res.Add("ok",false);
+            } else
+            {
+                res.Add("ok",true);
+            }
+            res.Add("data",result);
+            return res;
+        }
+
+        [HttpPost("SendList")]
+        public JObject SendList(JObject model)
+        {
+            _webClient = new WebClient();
+            _webClient.Encoding = System.Text.Encoding.UTF8;
+            _webClient.Headers.Add(HttpRequestHeader.ContentType, "application/json");
+            _webClient.Headers.Add(HttpRequestHeader.Accept, "application/json");
+            _webClient.Headers.Add("access_token:" + Configuration.GetSection("SendMessageZalo:access_token").Value);
+            JObject res = new JObject();
+            JArray result = new JArray();
+            JArray listPhoneNumber = (JArray)model["listPhoneNumber"];
+            foreach (string PhoneNumber in listPhoneNumber){
+                string Phone;
+                if (PhoneNumber.StartsWith("0") == true)
+                {
+                    Phone = "84" + PhoneNumber.Substring(1);
+                } else
+                {
+                    Phone = PhoneNumber; 
+                }
+                var connection = new SqlConnection(Configuration.GetSection("ConnectionStrings:MainConnection").Value);
+                connection.Open();
+                using var command = new SqlCommand();
+                command.Connection = connection;
+                string queryString = @"SELECT UserId FROM Registers WHERE PhoneNumber=@PhoneNumber";
+                command.CommandText = queryString;
+                command.Parameters.AddWithValue("@PhoneNumber", Phone);
+                using var reader = command.ExecuteReader();
+                if (reader.HasRows) {
+                    while (reader.Read())
+                    {
+                        JObject data = new JObject();
+                        JObject user_id = new JObject();
+                        JObject message = new JObject();
+                        JObject attachment = new JObject();
+                        JObject payload = new JObject();
+                        user_id.Add("user_id",String.Format("{0}", reader[0]));
+                        message.Add("attachment",attachment);
+                        payload.Add("template_type","list");
+                        payload.Add("elements",model["elements"]);
+                        attachment.Add("type","template");
+                        attachment.Add("payload",payload);
+                        data.Add("recipient",user_id);
+                        data.Add("message",message);
+                        string SendListUrl = "https://openapi.zalo.me/v2.0/oa/message";
+                        string SendList = _webClient.UploadString(SendListUrl,data.ToString());
+                        JObject json = JObject.Parse(SendList);
+                        if (json["error"].ToString() != "0")
+                        {
+                            JObject err = new JObject();
+                            err.Add("ok", false);
+                            err.Add("PhoneNumber",PhoneNumber);
+                            err.Add("error",json);
+                            result.Add(err);
+                        } else
+                        {
+                            JObject success = new JObject();
+                            success.Add("ok", true);
+                            success.Add("PhoneNumber",PhoneNumber);
+                            success.Add("status",json);
+                            result.Add(success);
+                        }
+                    }
+                }
+                else {
+                    JObject err = new JObject();
+                    err.Add("ok", false);
+                    err.Add("PhoneNumber",PhoneNumber);
+                    err.Add("error","số điện thoại không tồn tại trên hệ thống");
+                    result.Add(err);
+                }
+                connection.Close();
+            }
+            res.Add("data", result);
             return res;
         }
 
@@ -71,10 +254,9 @@ namespace SendMessageZalo.Controllers
             _webClient.Encoding = System.Text.Encoding.UTF8;
             _webClient.Headers.Add(HttpRequestHeader.ContentType, "application/json");
             _webClient.Headers.Add(HttpRequestHeader.Accept, "application/json");
+            _webClient.Headers.Add("access_token:" + Configuration.GetSection("SendMessageZalo:access_token").Value);
             string msg = model["msg"].ToString();
             JArray listUserId = (JArray)model["listUserId"];
-            //https://oauth.zaloapp.com/v3/oa/permission?app_id=3139874215511393396&redirect_uri=https://vacom.com.vn
-            _webClient.Headers.Add("access_token:" + Configuration.GetSection("SendMessageZalo:access_token").Value);
             JArray result = new JArray();
             //------ Gửi tin nhắn
             foreach (string UserId in listUserId){
@@ -86,13 +268,13 @@ namespace SendMessageZalo.Controllers
                 data.Add("recipient",user_id);
                 data.Add("message",message);
                 string SendMessageUrls = "https://openapi.zalo.me/v2.0/oa/message";
-                Object SendMessage = _webClient.UploadString(SendMessageUrls,data.ToString());
+                JObject SendMessage = JObject.Parse(_webClient.UploadString(SendMessageUrls,data.ToString()));
                 result.Add(SendMessage);
             }
-            //-----
+            //------
             JObject res = new JObject();
             res.Add("ok", true);
-            res.Add("data", result.ToString());
+            res.Add("data", result);
             return res;
         }
 
@@ -107,7 +289,7 @@ namespace SendMessageZalo.Controllers
             JArray listPhoneNumber = (JArray)model["listPhoneNumber"];
             _webClient.Headers.Add("access_token:" + Configuration.GetSection("SendMessageZalo:access_token").Value);
             JArray result = new JArray();
-            //------ Gửi tin nhắn
+            //------ Gửi danh sách
             foreach (string PhoneNumber in listPhoneNumber){
                 string Phone;
                 if (PhoneNumber.StartsWith("0") == true)
@@ -150,7 +332,7 @@ namespace SendMessageZalo.Controllers
                             JObject success = new JObject();
                             success.Add("ok", true);
                             success.Add("PhoneNumber",PhoneNumber);
-                            success.Add("data",json);
+                            success.Add("status",json);
                             result.Add(success);
                         }
                     }
@@ -237,7 +419,7 @@ namespace SendMessageZalo.Controllers
             return res;
         }
 
-        private string Reply(string msg, string msgId){
+        private JObject Reply(string msg, string msgId){
             JObject data = new JObject();
             JObject message_id = new JObject();
             JObject text = new JObject();
@@ -252,7 +434,10 @@ namespace SendMessageZalo.Controllers
             _webClient.Headers.Add(HttpRequestHeader.Accept, "application/json");
             _webClient.Headers.Add("access_token:" + Configuration.GetSection("SendMessageZalo:access_token").Value);
             string ReplyMessage = _webClient.UploadString(SendMessageUrls,data.ToString());
-            return msg + ReplyMessage;
+            JObject res = new JObject();
+            res.Add("msg",msg);
+            res.Add("status",JObject.Parse(ReplyMessage));
+            return  res;
         }
 
         private JObject ReceiveMessage(JObject model) {
@@ -267,11 +452,18 @@ namespace SendMessageZalo.Controllers
             string status = profile["error"].ToString();
             JObject res = new JObject();
             string msg = model["message"]["text"].ToString();
-            string key = msg.Split(' ')[0];
-            string content = msg.Substring(key.Length);
-            switch (key)
+            string key = msg;
+            if (msg.Split(' ')[0].ToLower() == "dk")
             {
-                case "DK":
+                key = msg.Split(' ')[0];
+            } else
+            {
+                key = msg;
+            }
+            //string content = msg.Substring(key.Length);
+            switch (key.ToLower())
+            {
+                case "dk":
                     if (status != "0")
                         {
                             res.Add("error", "Bạn hãy follow chúng tôi để sử dụng chức năng này");
@@ -279,13 +471,45 @@ namespace SendMessageZalo.Controllers
                         }
                     res = Register(model);
                     return res;
-                case "TC":
+                case "tc":
                     res.Add("reply",Reply("Tiền mặt trong quỹ của bạn còn: 1.000.000",model["message"]["msg_id"].ToString()));
                     return res;
-                case "Reply":
-                    res.Add("reply",Reply("Bạn cần hỗ trợ gì ?",model["message"]["msg_id"].ToString()));
+                case "hỗ trợ" or "trợ giúp" or "cần hỗ trợ" or "cần trợ giúp" or "yêu cầu hỗ trợ" or "tôi cần hỗ trợ" or "tôi cần trợ giúp" or "tôi muốn hỗ trợ" or "#hotro":
+                    if (status != "0")
+                    {
+                        res.Add("ok",false);
+                        res.Add("error", "Bạn hãy follow chúng tôi để sử dụng chức năng này");
+                        return res;
+                    }
+                    if (profile["data"]["shared_info"] == null)
+                    {
+                        res.Add("reply",Reply("Bạn chưa bổ sung thông tin, vui lòng bổ sung thông tin rồi gửi lại hỗ trợ",model["message"]["msg_id"].ToString()));
+                        RequestUserInfo(user_send_id);
+                        return res;
+                    }
+                    res.Add("reply",Reply("Yêu cầu hỗ trợ của bạn đã được gửi tới bộ phận tiếp nhận, xin vui lòng chờ trong giây lát",model["message"]["msg_id"].ToString()));
+                    JObject modelSendMessage = new JObject();
+                    JArray listPhoneNumber = new JArray();
+                    var connection = new SqlConnection(Configuration.GetSection("ConnectionStrings:MainConnection").Value);
+                    connection.Open();
+                    var command = new SqlCommand();
+                    command.Connection = connection;
+                    string queryString = @"Select PhoneNumber from SupportPhoneNumbers where status = 1";
+                    command.CommandText = queryString;
+                    var reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        listPhoneNumber.Add(String.Format("{0}", reader[0]));
+                    }
+                    connection.Close();
+                    string phoneNumber = "";
+                    //if (profile["data"]["shared_info"] != null)
+                    phoneNumber ="có số điện thoại " + "0" +  profile["data"]["shared_info"]["phone"].ToString().Substring(2);
+                    modelSendMessage.Add("msg","Khách hàng " + profile["data"]["display_name"].ToString() + " " + phoneNumber + " đang yêu cầu hỗ trợ");
+                    modelSendMessage.Add("listPhoneNumber",listPhoneNumber);
+                    res.Add("sendMessage",SendMessagePhoneNumber(modelSendMessage));
                     return res;
-                case "BSTT":
+                case "bstt":
                     res = RequestUserInfo(user_send_id);
                     return res;
                 default:
@@ -300,33 +524,19 @@ namespace SendMessageZalo.Controllers
             string UserId = model["sender"]["id"].ToString();
             bool check = CheckRegister(UserId);
             JObject res = new JObject();
-            if (check!=true)
-            {
-                connection.Open();
-                // Tạo đối tượng SqlCommand
-                using var command = new SqlCommand();
-                command.Connection = connection;
-                // Câu truy vấn gồm: chèn dữ liệu vào và lấy định danh(Primary key) mới chèn vào
-                string queryString = @"INSERT INTO Registers (id, UserId, Link, DATE_NEW, Status) VALUES (@id, @UserId, @Link, @DATE_NEW, @Status)";
-                command.CommandText = queryString;
-                command.Parameters.AddWithValue("@id", Guid.NewGuid());
-                command.Parameters.AddWithValue("@UserId", UserId);
-                command.Parameters.AddWithValue("@Link", msg.Split(' ')[1]);
-                command.Parameters.AddWithValue("@DATE_NEW", DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss"));
-                command.Parameters.AddWithValue("@Status", 1);
-                var rows_affected = command.ExecuteNonQuery();
-                connection.Close();
-                res.Add("ok", true);
-                res.Add("Status","Đăng ký thành công");
-                Reply("Đăng ký thành công, bạn hãy bổ sung thông tin để được chăm sóc tốt hơn",model["message"]["msg_id"].ToString());
-                RequestUserInfo(UserId);
-                return res;
-            } 
-            else {
-                res.Add("error", "Bạn đã đăng ký rồi");
-                Reply("Bạn đã đăng ký rồi",model["message"]["msg_id"].ToString());
-                return res;
-            }
+            connection.Open();
+            using var command = new SqlCommand();
+            command.Connection = connection;
+            string queryString = @"UPDATE Registers set Link = @Link where UserId = @UserId";
+            command.CommandText = queryString;
+            command.Parameters.AddWithValue("@Link", msg.Split(' ')[1]);
+            command.Parameters.AddWithValue("@UserId", UserId);
+            var rows_affected = command.ExecuteNonQuery();
+            connection.Close();
+            res.Add("ok", true);
+            res.Add("Status","Đăng ký thành công");
+            Reply("Đăng ký thành công",model["message"]["msg_id"].ToString());
+            return res;
         }
 
         private bool CheckRegister(string UserId){
@@ -344,15 +554,28 @@ namespace SendMessageZalo.Controllers
             return check;
         }
 
+        private bool CheckProfileUser(string UserId){
+            bool check = false;
+            var connection = new SqlConnection(Configuration.GetSection("ConnectionStrings:MainConnection").Value);
+            connection.Open();
+            using var command = new SqlCommand();
+            command.Connection = connection;
+            string queryString = @"SELECT TOP 1 UserId FROM Registers WHERE UserId=@UserId and PhoneNumber <> ''";
+            command.CommandText = queryString;
+            command.Parameters.AddWithValue("@UserId", UserId);
+            using var reader = command.ExecuteReader();
+            if (reader.HasRows) check = true;
+            connection.Close();
+            return check;
+        }
+
         private JObject Follow(JObject model){
             var connection = new SqlConnection(Configuration.GetSection("ConnectionStrings:MainConnection").Value);
             string UserId = model["follower"]["id"].ToString();
             JObject res = new JObject();
             connection.Open();
-            // Tạo đối tượng SqlCommand
             using var command = new SqlCommand();
             command.Connection = connection;
-            // Câu truy vấn gồm: chèn dữ liệu vào và lấy định danh(Primary key) mới chèn vào
             string queryString = @"INSERT INTO Followers (id, UserId, DATE_NEW) VALUES (@id, @UserId, @DATE_NEW)";
             command.CommandText = queryString;
             command.Parameters.AddWithValue("@id", Guid.NewGuid());
@@ -360,6 +583,42 @@ namespace SendMessageZalo.Controllers
             command.Parameters.AddWithValue("@DATE_NEW", DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss"));
             var rows_affected = command.ExecuteNonQuery();
             connection.Close();
+            bool check = CheckRegister(UserId);
+            if (check!=true)
+            {
+                connection.Open();
+                var commandRG = new SqlCommand();
+                commandRG.Connection = connection;
+                var queryRegister = @"INSERT INTO Registers (id, UserId, Link, DATE_NEW, Status) VALUES (@id, @UserId, @Link, @DATE_NEW, @Status)";
+                commandRG.CommandText = queryRegister;
+                commandRG.Parameters.AddWithValue("@id", Guid.NewGuid());
+                commandRG.Parameters.AddWithValue("@UserId", UserId);
+                commandRG.Parameters.AddWithValue("@Link", "");
+                commandRG.Parameters.AddWithValue("@DATE_NEW", DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss"));
+                commandRG.Parameters.AddWithValue("@Status", 1);
+                var rows = commandRG.ExecuteNonQuery();
+                connection.Close();
+                res.Add("ok", true);
+                JObject sendmessage = new JObject();
+                sendmessage.Add("msg","Bạn hãy bổ sung thông tin để được chăm sóc tốt hơn nhé");
+                JArray listUserId = new JArray();
+                listUserId.Add(UserId);
+                sendmessage.Add("listUserId",listUserId);
+                res.Add("SendMessage",SendMessageUserId(sendmessage));
+                RequestUserInfo(UserId);
+                return res;
+            } else
+            {
+                // Nếu đã đăng kí thì đổi trạng thái hoạt động
+                connection.Open();
+                var commandRG = new SqlCommand();
+                commandRG.Connection = connection;
+                var queryRegister = @"UPDATE Registers set Status = 1 where UserId = @UserId";
+                commandRG.Parameters.AddWithValue("@UserId", UserId);
+                commandRG.CommandText = queryRegister;
+                var rows = commandRG.ExecuteNonQuery();
+                connection.Close();
+            }
             res.Add("ok", true);
             res.Add("Status","Follow thành công");
             return res;
@@ -370,14 +629,21 @@ namespace SendMessageZalo.Controllers
             string UserId = model["follower"]["id"].ToString();
             JObject res = new JObject();
             connection.Open();
-            // Tạo đối tượng SqlCommand
+            // Xóa đối tượng Followers
             using var command = new SqlCommand();
             command.Connection = connection;
-            // Câu truy vấn gồm: chèn dữ liệu vào và lấy định danh(Primary key) mới chèn vào
             string queryString = @"DELETE FROM Followers WHERE UserId = @UserId";
             command.CommandText = queryString;
             command.Parameters.AddWithValue("@UserId", UserId);
             var rows_affected = command.ExecuteNonQuery();
+
+            // Cập nhật trạng thái tắt hoạt động của Registers
+            var commandRG = new SqlCommand();
+            commandRG.Connection = connection;
+            var queryRegister = @"UPDATE Registers set Status = 0 where UserId = @UserId";
+            commandRG.Parameters.AddWithValue("@UserId", UserId);
+            commandRG.CommandText = queryRegister;
+            var rowRG = commandRG.ExecuteNonQuery();
             connection.Close();
             res.Add("ok", true);
             res.Add("Status","Bỏ theo dõi thành công");
@@ -419,37 +685,52 @@ namespace SendMessageZalo.Controllers
 
         private JObject SaveUserInfo(JObject model){
             var connection = new SqlConnection(Configuration.GetSection("ConnectionStrings:MainConnection").Value);
-            connection.Open();
-            // Tạo đối tượng SqlCommand
-            using var command = new SqlCommand();
-            command.Connection = connection;
-            // Câu truy vấn gồm: chèn dữ liệu vào và lấy định danh(Primary key) mới chèn vào
-            string queryString = @"UPDATE Registers
-                                   SET  Address = @Address, PhoneNumber = @PhoneNumber, District = @District, Name = @Name, 
-                                        Ward = @Ward, City = @City
-                                   WHERE UserId=@UserId";
-            command.CommandText = queryString;
-            command.Parameters.AddWithValue("@Address", model["info"]["address"].ToString());
-            command.Parameters.AddWithValue("@PhoneNumber", model["info"]["phone"].ToString());
-            command.Parameters.AddWithValue("@District", model["info"]["district"].ToString());
-            command.Parameters.AddWithValue("@Name", model["info"]["name"].ToString());
-            command.Parameters.AddWithValue("@Ward", model["info"]["ward"].ToString());
-            command.Parameters.AddWithValue("@City", model["info"]["city"].ToString());
-            command.Parameters.AddWithValue("@UserId", model["sender"]["id"].ToString());
-            JObject modelSenMessage = new JObject();
-            var rows_affected = command.ExecuteNonQuery(); 
-            if (rows_affected>=1) {
-                modelSenMessage.Add("msg","Bạn đã bổ sung thông tin thành công");
-            } else {
-                modelSenMessage.Add("msg","Có lỗi xảy ra, có thể bạn chưa đăng ký");
-            }
-            connection.Close();
+            bool check = CheckRegister(model["sender"]["id"].ToString());
             JObject res = new JObject();
             JArray arr = new JArray();
+            JObject modelSenMessage = new JObject();
+            if (check)
+            {
+                connection.Open();
+                // Tạo đối tượng SqlCommand
+                using var command = new SqlCommand();
+                command.Connection = connection;
+                string queryString = @"UPDATE Registers
+                                    SET  Address = @Address, PhoneNumber = @PhoneNumber, District = @District, Name = @Name, 
+                                            Ward = @Ward, City = @City
+                                    WHERE UserId=@UserId";
+                command.CommandText = queryString;
+                command.Parameters.AddWithValue("@Address", model["info"]["address"].ToString());
+                command.Parameters.AddWithValue("@PhoneNumber", model["info"]["phone"].ToString());
+                command.Parameters.AddWithValue("@District", model["info"]["district"].ToString());
+                command.Parameters.AddWithValue("@Name", model["info"]["name"].ToString());
+                command.Parameters.AddWithValue("@Ward", model["info"]["ward"].ToString());
+                command.Parameters.AddWithValue("@City", model["info"]["city"].ToString());
+                command.Parameters.AddWithValue("@UserId", model["sender"]["id"].ToString());
+                var rows_affected = command.ExecuteNonQuery();      
+                connection.Close();
+            } else {
+                connection.Open();
+                // Tạo đối tượng SqlCommand
+                using var command = new SqlCommand();
+                command.Connection = connection;
+                string queryString = @"INSERT INTO Registers (id, UserId, Link, DATE_NEW, Status, Address, PhoneNumber, District, Name, Ward, City) 
+                                                      VALUES (@id, @UserId, '', @DATE_NEW, 1, @Address, @PhoneNumber, @District, @Name, @Ward, @City)";
+                command.CommandText = queryString;
+                command.Parameters.AddWithValue("@id", Guid.NewGuid());
+                command.Parameters.AddWithValue("@UserId", model["sender"]["id"].ToString());
+                command.Parameters.AddWithValue("@DATE_NEW", DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss"));
+                command.Parameters.AddWithValue("@Address", model["info"]["address"].ToString());
+                command.Parameters.AddWithValue("@PhoneNumber", model["info"]["phone"].ToString());
+                command.Parameters.AddWithValue("@District", model["info"]["district"].ToString());
+                command.Parameters.AddWithValue("@Name", model["info"]["name"].ToString());
+                command.Parameters.AddWithValue("@Ward", model["info"]["ward"].ToString());
+                command.Parameters.AddWithValue("@City", model["info"]["city"].ToString());
+                var rows_affected = command.ExecuteNonQuery();   
+            }
+            modelSenMessage.Add("msg","Bạn đã bổ sung thông tin thành công");
             arr.Add(model["sender"]["id"].ToString());
             modelSenMessage.Add("listUserId",arr);
-            // res.Add("ok", true);
-            // res.Add("Status","Đăng ký thành công");
             res = SendMessageUserId(modelSenMessage);
             return res;
         }
